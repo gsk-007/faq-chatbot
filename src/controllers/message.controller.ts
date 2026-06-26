@@ -7,6 +7,7 @@ import { chat } from "../services/chat.service.js";
 
 import { BadRequestError } from "../errors/BadRequestError.js";
 import { NotFoundError } from "../errors/NotFoundError.js";
+import { sanitizeMessage } from "../utils/message.js";
 
 export function handlerMessageGetByConversationId(
   req: Request,
@@ -42,25 +43,13 @@ export function handlerMessageCreate(
     throw new BadRequestError("Invalid conversation id.");
   }
 
-  const conversation =
-    getConversationById(id);
+  const conversation = getConversationById(id);
 
   if (!conversation) {
-    throw new NotFoundError(
-      "Conversation not found."
-    );
+    throw new NotFoundError("Conversation not found.");
   }
 
-  const { content } = req.body;
-
-  if (
-    typeof content !== "string" ||
-    content.trim() === ""
-  ) {
-    throw new BadRequestError(
-      "Message content is required."
-    );
-  }
+  const content = sanitizeMessage(req.body.content);
 
   const reply = chat(
     id,

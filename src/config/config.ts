@@ -22,6 +22,7 @@ type Config = {
 
   openai: {
     apiKey: string;
+    model: string;
   };
 };
 
@@ -37,5 +38,6 @@ export const config: Config = {
 
   openai: {
     apiKey: envOrThrow("OPENAI_API_KEY"),
+    model: envOrThrow("OPENAI_MODEL"),
   },
 };

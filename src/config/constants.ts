@@ -6,4 +6,10 @@ export const APP = {
   MAX_CONTEXT_MESSAGES: 10,
 
   MAX_MESSAGE_LENGTH: 2000,
+
+  MAX_OUTPUT_TOKENS: 300,
+
+  LLM_TIMEOUT: 15000,
+
+  TEMPERATURE: 0.2
   } as const

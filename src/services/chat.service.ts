@@ -4,20 +4,24 @@ import {
 } from "../db/queries/messages.js";
 
 import { APP } from "../config/constants.js";
+import { generateReply } from "./llm.service.js";
 
-export function chat(
+export async function chat(
   conversationId: string,
   content: string
-): string {
+): Promise<string> {
   createMessage(
     conversationId,
     "user",
     content
   );
 
-  // Placeholder
-  const reply =
-    "This is a placeholder AI response.";
+  const history = getRecentMessages(
+    conversationId,
+    APP.MAX_CONTEXT_MESSAGES
+  );
+
+  const reply = await generateReply(history);
 
   createMessage(
     conversationId,
