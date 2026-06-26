@@ -1,0 +1,16 @@
+CREATE TABLE `conversations` (
+	`id` text PRIMARY KEY NOT NULL,
+	`title` text DEFAULT 'New Conversation' NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `messages` (
+	`id` text PRIMARY KEY NOT NULL,
+	`conversation_id` text NOT NULL,
+	`sender` text NOT NULL,
+	`content` text NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`conversation_id`) REFERENCES `conversations`(`id`) ON UPDATE no action ON DELETE cascade
+);
