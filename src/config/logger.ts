@@ -9,6 +9,7 @@ export const logger = isDevelopment
         target: "pino-pretty",
         options: {
           colorize: true,
+          levelFirst: true,
         },
       },
     })

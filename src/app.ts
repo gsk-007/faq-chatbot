@@ -1,5 +1,7 @@
 import express from "express";
 import morgan from "morgan";
+import { notFound } from "./middleware/not-found.js";
+import { errorHandler } from "./middleware/error-handler.js";
 
 const app = express();
 
@@ -15,5 +17,11 @@ app.get("/health", (_, res) => {
     message: "Server is healthy 🚀",
   });
 });
+
+// 404
+app.use(notFound)
+
+// global error handler
+app.use(errorHandler)
 
 export default app;
