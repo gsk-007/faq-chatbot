@@ -3,6 +3,8 @@ import morgan from "morgan";
 import { notFound } from "./middleware/not-found.js";
 import { errorHandler } from "./middleware/error-handler.js";
 
+import routes from "./routes/index.js"
+
 const app = express();
 
 app.use(express.json());
@@ -17,6 +19,8 @@ app.get("/health", (_, res) => {
     message: "Server is healthy 🚀",
   });
 });
+
+app.use("/api", routes);
 
 // 404
 app.use(notFound)

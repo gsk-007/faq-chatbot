@@ -1,0 +1,9 @@
+export const APP = {
+  MAX_CONVERSATIONS: 5,
+
+  MAX_MESSAGES: 100,
+
+  MAX_CONTEXT_MESSAGES: 10,
+
+  MAX_MESSAGE_LENGTH: 2000,
+  } as const
