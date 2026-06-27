@@ -10,6 +10,8 @@ import {
   getConversations,
   openConversation,
   sendCurrentMessage,
+  removeConversation,
+  renameConversation
 } from "./chat.js";
 
 const newChatButton = document.querySelector("#new-chat-btn");
@@ -57,19 +59,43 @@ messageInput.addEventListener(
 conversationList.addEventListener(
   "click",
   async (event) => {
-    const item = event.target.closest(
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const id = target.dataset.id;
+
+    if (typeof id !== "string") {
+      return;
+    }
+
+    if (target.classList.contains("rename-btn")) {
+      event.stopPropagation();
+
+      await renameConversation(id);
+
+      return;
+    }
+
+    if (target.classList.contains("delete-btn")) {
+      event.stopPropagation();
+
+      await removeConversation(id);
+
+      return;
+    }
+
+    const item = target.closest(
       ".conversation-item"
     );
 
-    if (!item) return;
+    if (!item) {
+      return;
+    }
 
-    const { id } = item.dataset;
-
-    if (typeof id !== "string") return;
-
-    if (
-      getActiveConversation()?.id === id
-    ) {
+    if (getActiveConversation()?.id === id) {
       return;
     }
 

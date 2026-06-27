@@ -17,6 +17,7 @@ import {
   setChatTitle,
   setLoading,
   setTyping,
+  showToast,
 } from "./ui.js";
 
 const STORAGE_KEY = "conversations";
@@ -49,7 +50,7 @@ export function getActiveConversation() {
 
 export async function createNewConversation() {
   if (conversations.length >= MAX_CONVERSATIONS) {
-    alert("Maximum of 5 conversations allowed.");
+    showToast("Maximum of 5 conversations allowed.");
     return;
   }
 
@@ -97,27 +98,48 @@ export async function openConversation(id) {
   );
 }
 
-export async function renameConversation(title) {
-  if (!activeConversation) return;
-
-  const updated = await updateConversation(
-    activeConversation.id,
-    title
+export async function renameConversation(id) {
+  const conversation = conversations.find(
+    (c) => c.id === id
   );
 
-  activeConversation.title = updated.title;
+  if (!conversation) return;
+
+  const title = prompt(
+    "Conversation name",
+    conversation.title
+  );
+
+  if (!title || !title.trim()) {
+    return;
+  }
+
+  const updated = await updateConversation(
+    id,
+    title.trim()
+  );
+
+  conversation.title = updated.title;
 
   save();
 
   renderConversationList(
     conversations,
-    activeConversation.id
+    activeConversation?.id
   );
 
-  setChatTitle(updated.title);
+  if (activeConversation?.id === id) {
+    setChatTitle(updated.title);
+  }
 }
 
 export async function removeConversation(id) {
+  const confirmed = confirm(
+    "Delete this conversation?"
+  );
+
+  if (!confirmed) return;
+
   await deleteConversation(id);
 
   conversations = conversations.filter(
@@ -126,13 +148,24 @@ export async function removeConversation(id) {
 
   save();
 
-  activeConversation = null;
+  if (activeConversation?.id === id) {
+    activeConversation = null;
 
-  renderConversationList(conversations);
+    clearMessages();
 
-  clearMessages();
+    if (conversations.length > 0) {
+      await openConversation(
+        conversations[0].id
+      );
+    } else {
+      setChatTitle("New Chat");
+    }
+  }
 
-  setChatTitle("New Chat");
+  renderConversationList(
+    conversations,
+    activeConversation?.id
+  );
 }
 
 /* ---------------- Messages ---------------- */
@@ -167,10 +200,7 @@ export async function sendCurrentMessage() {
       response.reply
     );
   } catch (error) {
-    renderMessage(
-      "assistant",
-      `⚠️ ${error.message}`
-    );
+    showToast(error.message)
   } finally {
     setTyping(false);
 

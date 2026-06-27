@@ -4,6 +4,24 @@ const chatTitle = document.querySelector("#chat-title");
 const typingIndicator = document.querySelector("#typing-indicator");
 const sendButton = document.querySelector("#send-btn");
 const messageInput = document.querySelector("#message-input");
+const toast = document.querySelector("#toast");
+
+let toastTimer;
+
+export function showToast(
+  message,
+  type = "error"
+) {
+  toast.textContent = message;
+
+  toast.className = `toast ${type} show`;
+
+  clearTimeout(toastTimer);
+
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
 
 export function clearMessages() {
   messagesContainer.innerHTML = "";
@@ -13,7 +31,10 @@ export function setChatTitle(title) {
   chatTitle.textContent = title;
 }
 
-export function renderConversation(conversation, active = false) {
+export function renderConversation(
+  conversation,
+  active = false
+) {
   const item = document.createElement("div");
 
   item.className = "conversation-item";
@@ -23,7 +44,32 @@ export function renderConversation(conversation, active = false) {
   }
 
   item.dataset.id = conversation.id;
-  item.textContent = conversation.title;
+
+  item.innerHTML = `
+      <span class="conversation-title">
+        ${conversation.title}
+      </span>
+
+      <div class="conversation-actions">
+
+        <button
+          class="icon-btn rename-btn"
+          data-id="${conversation.id}"
+          title="Rename"
+        >
+          ✏️
+        </button>
+
+        <button
+          class="icon-btn delete-btn"
+          data-id="${conversation.id}"
+          title="Delete"
+        >
+          🗑️
+        </button>
+
+      </div>
+  `;
 
   conversationList.appendChild(item);
 

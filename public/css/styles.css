@@ -112,17 +112,21 @@ button {
 }
 
 .conversation-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
   padding: 14px;
+
+  margin-bottom: 8px;
 
   border-radius: var(--radius);
 
   cursor: pointer;
 
-  margin-bottom: 8px;
-
-  background: transparent;
-
-  transition: 0.2s;
+  transition: .2s;
 }
 
 .conversation-item:hover {
@@ -131,6 +135,50 @@ button {
 
 .conversation-item.active {
   background: var(--primary);
+}
+
+.conversation-title {
+  flex: 1;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+.conversation-actions {
+  display: flex;
+
+  gap: 6px;
+
+  opacity: 0;
+
+  transition: .2s;
+}
+
+.conversation-item:hover .conversation-actions {
+  opacity: 1;
+}
+
+.icon-btn {
+  border: none;
+
+  background: transparent;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+  padding: 4px;
+
+  border-radius: 6px;
+}
+
+.icon-btn:hover {
+  background: rgba(255,255,255,.15);
 }
 
 /* Chat */
@@ -366,4 +414,46 @@ button {
 
     transform: translateY(0);
   }
+}
+
+/* Toast */
+
+.toast {
+  position: fixed;
+
+  right: 24px;
+  bottom: 24px;
+
+  min-width: 280px;
+
+  padding: 14px 18px;
+
+  border-radius: 10px;
+
+  background: #ef4444;
+  color: white;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,.3);
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transform: translateY(20px);
+
+  transition: .25s;
+}
+
+.toast.show {
+  opacity: 1;
+
+  transform: translateY(0);
+}
+
+.toast.success {
+  background: #16a34a;
+}
+
+.toast.error {
+  background: #ef4444;
 }
