@@ -161,7 +161,7 @@ export async function sendCurrentMessage() {
       activeConversation.id,
       content
     );
-    console.log(response)
+
     renderMessage(
       "assistant",
       response.reply

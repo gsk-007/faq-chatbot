@@ -7,7 +7,7 @@ import { chat } from "../services/chat.service.js";
 
 import { BadRequestError } from "../errors/BadRequestError.js";
 import { NotFoundError } from "../errors/NotFoundError.js";
-import { sanitizeMessage } from "../utils/message.js";
+import { randomDelay, sanitizeMessage } from "../utils/message.js";
 
 export function handlerMessageGetByConversationId(
   req: Request,
@@ -33,10 +33,10 @@ export function handlerMessageGetByConversationId(
   );
 }
 
-export function handlerMessageCreate(
+export async function handlerMessageCreate(
   req: Request,
   res: Response
-): void {
+): Promise<void> {
   const { id } = req.params;
 
   if (typeof id !== "string") {
@@ -49,9 +49,11 @@ export function handlerMessageCreate(
     throw new NotFoundError("Conversation not found.");
   }
 
+  await randomDelay(500, 3000)
+
   const content = sanitizeMessage(req.body.content);
 
-  const reply = chat(
+  const reply = await chat(
     id,
     content.trim()
   );

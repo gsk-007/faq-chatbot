@@ -1,4 +1,5 @@
 import express from "express";
+import path from "node:path"
 import morgan from "morgan";
 import { notFound } from "./middleware/not-found.js";
 import { errorHandler } from "./middleware/error-handler.js";
@@ -9,6 +10,10 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files
+app.use(express.static(path.join(process.cwd(), "public")));
+
 app.use(morgan('dev'))
 
 

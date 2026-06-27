@@ -17,3 +17,16 @@ export function sanitizeMessage(content: unknown): string {
 
   return sanitized;
 }
+
+
+export async function randomDelay(
+  minMs = 0,
+  maxMs = 5_000
+): Promise<void> {
+  const delay =
+    Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay);
+  });
+}
