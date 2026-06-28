@@ -1,118 +1,86 @@
-import {
-  conversationList,
-  messageInput,
-  sendButton,
-} from "./ui.js";
+import { messageInput, sendButton, messagesEl, sessionsBar } from "./ui.js";
+import { initSession, openSession, renameSession, removeSession, sendCurrentMessage, startNewSession } from "./chat.js";
 
-import {
-  createNewConversation,
-  getActiveConversation,
-  getConversations,
-  openConversation,
-  sendCurrentMessage,
-  removeConversation,
-  renameConversation
-} from "./chat.js";
+const chatToggle = document.querySelector("#chat-toggle");
+const chatPanel = document.querySelector("#chat-panel");
+const chatNew = document.querySelector("#chat-new");
+const iconChat = chatToggle.querySelector(".icon-chat");
+const iconClose = chatToggle.querySelector(".icon-close");
+const toggleLabel = chatToggle.querySelector("span");
 
-const newChatButton = document.querySelector("#new-chat-btn");
+let isOpen = false;
 
-/* ---------------- Init ---------------- */
+/* ---- Widget toggle ---- */
 
-function init() {
-  const conversations = getConversations();
-
-  if (conversations.length > 0) {
-    openConversation(conversations[0].id);
-  }
-
-  autoResizeTextarea();
+function openWidget() {
+  isOpen = true;
+  chatPanel.classList.add("open");
+  chatPanel.setAttribute("aria-hidden", "false");
+  chatToggle.classList.add("open");
+  iconChat.classList.add("hidden");
+  iconClose.classList.remove("hidden");
+  if (toggleLabel) toggleLabel.classList.add("hidden");
+  initSession().then(() => messageInput.focus());
 }
 
-init();
-
-/* ---------------- Events ---------------- */
-
-newChatButton.addEventListener(
-  "click",
-  createNewConversation
-);
-
-sendButton.addEventListener(
-  "click",
-  sendCurrentMessage
-);
-
-messageInput.addEventListener(
-  "keydown",
-  async (event) => {
-    if (
-      event.key === "Enter" &&
-      !event.shiftKey
-    ) {
-      event.preventDefault();
-
-      await sendCurrentMessage();
-    }
-  }
-);
-
-conversationList.addEventListener(
-  "click",
-  async (event) => {
-    const target = event.target;
-
-    if (!(target instanceof HTMLElement)) {
-      return;
-    }
-
-    const id = target.dataset.id;
-
-    if (typeof id !== "string") {
-      return;
-    }
-
-    if (target.classList.contains("rename-btn")) {
-      event.stopPropagation();
-
-      await renameConversation(id);
-
-      return;
-    }
-
-    if (target.classList.contains("delete-btn")) {
-      event.stopPropagation();
-
-      await removeConversation(id);
-
-      return;
-    }
-
-    const item = target.closest(
-      ".conversation-item"
-    );
-
-    if (!item) {
-      return;
-    }
-
-    if (getActiveConversation()?.id === id) {
-      return;
-    }
-
-    await openConversation(id);
-  }
-);
-
-/* ---------------- Helpers ---------------- */
-
-function autoResizeTextarea() {
-  messageInput.addEventListener(
-    "input",
-    () => {
-      messageInput.style.height = "0px";
-
-      messageInput.style.height =
-        `${messageInput.scrollHeight}px`;
-    }
-  );
+function closeWidget() {
+  isOpen = false;
+  chatPanel.classList.remove("open");
+  chatPanel.setAttribute("aria-hidden", "true");
+  chatToggle.classList.remove("open");
+  iconChat.classList.remove("hidden");
+  iconClose.classList.add("hidden");
+  if (toggleLabel) toggleLabel.classList.remove("hidden");
 }
+
+chatToggle.addEventListener("click", () => {
+  isOpen ? closeWidget() : openWidget();
+});
+
+/* ---- New conversation ---- */
+
+chatNew.addEventListener("click", startNewSession);
+
+/* ---- Send ---- */
+
+sendButton.addEventListener("click", () => sendCurrentMessage());
+
+messageInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendCurrentMessage();
+  }
+});
+
+/* ---- Auto-resize textarea ---- */
+
+messageInput.addEventListener("input", () => {
+  messageInput.style.height = "auto";
+  messageInput.style.height = `${messageInput.scrollHeight}px`;
+});
+
+/* ---- Sessions bar ---- */
+
+sessionsBar.addEventListener("click", (e) => {
+  const id = e.target.closest("[data-id]")?.dataset.id;
+  if (!id) return;
+
+  if (e.target.classList.contains("rename-btn")) {
+    renameSession(id);
+    return;
+  }
+  if (e.target.classList.contains("delete-btn")) {
+    removeSession(id);
+    return;
+  }
+
+  openSession(id);
+});
+
+/* ---- Suggestion buttons (event delegation) ---- */
+
+messagesEl.addEventListener("click", (e) => {
+  if (e.target.classList.contains("suggestion-btn")) {
+    sendCurrentMessage(e.target.textContent.trim());
+  }
+});

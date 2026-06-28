@@ -1,10 +1,4 @@
-import {
-  createConversation,
-  deleteConversation,
-  getMessages,
-  sendMessage,
-  updateConversation,
-} from "./api.js";
+import { createConversation, deleteConversation, getMessages, sendMessage, updateConversation } from "./api.js";
 
 import {
   clearInput,
@@ -12,200 +6,148 @@ import {
   focusInput,
   getInputValue,
   removeEmptyState,
-  renderConversationList,
+  renderEmptyState,
   renderMessage,
-  setChatTitle,
+  renderSessionsBar,
+  renderSkeleton,
   setLoading,
-  setTyping,
   showToast,
 } from "./ui.js";
 
-const STORAGE_KEY = "conversations";
-const MAX_CONVERSATIONS = 5;
+const STORAGE_KEY = "widget_sessions";
 
-let conversations = JSON.parse(
-  localStorage.getItem(STORAGE_KEY) ?? "[]"
-);
+// Normalise: earlier migration stored `label` instead of `title`
+let sessions = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]")
+  .map((s) => ({ id: s.id, title: s.title ?? s.label ?? "Chat" }));
+localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
 
-let activeConversation = null;
+let activeId = sessions[0]?.id ?? null;
+let loadedSessionId = null;
 
-/* ---------------- Storage ---------------- */
-
-function save() {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(conversations)
-  );
+function saveSessions() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
 }
 
-export function getConversations() {
-  return conversations;
-}
+export function getSessions() { return sessions; }
+export function getActiveId()  { return activeId; }
 
-export function getActiveConversation() {
-  return activeConversation;
-}
+export async function initSession() {
+  renderSessionsBar(sessions, activeId);
 
-/* ---------------- Conversations ---------------- */
+  if (loadedSessionId === activeId) return;
 
-export async function createNewConversation() {
-  if (conversations.length >= MAX_CONVERSATIONS) {
-    showToast("Maximum of 5 conversations allowed.");
-    return;
-  }
-
-  const conversation = await createConversation();
-
-  conversations.unshift({
-    id: conversation.id,
-    title: conversation.title,
-  });
-
-  save();
-
-  await openConversation(conversation.id);
-}
-
-export async function openConversation(id) {
-  const conversation = conversations.find(
-    (c) => c.id === id
-  );
-
-  if (!conversation) return;
-
-  activeConversation = conversation;
-
-  renderConversationList(
-    conversations,
-    activeConversation.id
-  );
-
-  setChatTitle(conversation.title);
-
-  clearMessages();
-
-  const messages = await getMessages(id);
-
-  if (messages.length === 0) {
-    return;
-  }
-
-  messages.forEach((message) =>
-    renderMessage(
-      message.sender,
-      message.content
-    )
-  );
-}
-
-export async function renameConversation(id) {
-  const conversation = conversations.find(
-    (c) => c.id === id
-  );
-
-  if (!conversation) return;
-
-  const title = prompt(
-    "Conversation name",
-    conversation.title
-  );
-
-  if (!title || !title.trim()) {
-    return;
-  }
-
-  const updated = await updateConversation(
-    id,
-    title.trim()
-  );
-
-  conversation.title = updated.title;
-
-  save();
-
-  renderConversationList(
-    conversations,
-    activeConversation?.id
-  );
-
-  if (activeConversation?.id === id) {
-    setChatTitle(updated.title);
-  }
-}
-
-export async function removeConversation(id) {
-  const confirmed = confirm(
-    "Delete this conversation?"
-  );
-
-  if (!confirmed) return;
-
-  await deleteConversation(id);
-
-  conversations = conversations.filter(
-    (c) => c.id !== id
-  );
-
-  save();
-
-  if (activeConversation?.id === id) {
-    activeConversation = null;
-
+  if (activeId) {
     clearMessages();
-
-    if (conversations.length > 0) {
-      await openConversation(
-        conversations[0].id
-      );
-    } else {
-      setChatTitle("New Chat");
+    const messages = await getMessages(activeId).catch(() => null);
+    if (messages && messages.length > 0) {
+      messages.forEach((m) => renderMessage(m.sender, m.content));
+      loadedSessionId = activeId;
+      return;
     }
   }
 
-  renderConversationList(
-    conversations,
-    activeConversation?.id
-  );
+  loadedSessionId = activeId;
+  renderEmptyState();
 }
 
-/* ---------------- Messages ---------------- */
+export async function openSession(id) {
+  if (id === activeId && loadedSessionId === id) return;
 
-export async function sendCurrentMessage() {
-  if (!activeConversation) {
-    await createNewConversation();
+  activeId = id;
+  clearMessages();
+  renderSessionsBar(sessions, activeId);
+
+  const messages = await getMessages(id).catch(() => null);
+  if (messages && messages.length > 0) {
+    messages.forEach((m) => renderMessage(m.sender, m.content));
+  } else {
+    renderEmptyState();
   }
 
-  const content = getInputValue().trim();
+  loadedSessionId = activeId;
+  focusInput();
+}
 
-  if (!content) return;
+export async function renameSession(id) {
+  const session = sessions.find((s) => s.id === id);
+  if (!session) return;
+
+  const title = prompt("Rename conversation", session.title);
+  if (!title?.trim()) return;
+
+  const updated = await updateConversation(id, title.trim()).catch(() => null);
+  if (!updated) { showToast("Could not rename."); return; }
+
+  session.title = updated.title;
+  saveSessions();
+  renderSessionsBar(sessions, activeId);
+  showToast("Renamed.", "success");
+}
+
+export async function removeSession(id) {
+  if (!confirm("Delete this conversation?")) return;
+
+  await deleteConversation(id).catch(() => null);
+
+  sessions = sessions.filter((s) => s.id !== id);
+  saveSessions();
+
+  if (activeId === id) {
+    activeId = sessions[0]?.id ?? null;
+    loadedSessionId = null;
+    clearMessages();
+    if (activeId) {
+      await openSession(activeId);
+      return;
+    }
+    renderEmptyState();
+  }
+
+  renderSessionsBar(sessions, activeId);
+}
+
+export async function startNewSession() {
+  activeId        = null;
+  loadedSessionId = null;
+  clearMessages();
+  renderSessionsBar(sessions, activeId);
+  renderEmptyState();
+  focusInput();
+}
+
+export async function sendCurrentMessage(prefilled) {
+  const text = (prefilled ?? getInputValue()).trim();
+  if (!text) return;
 
   clearInput();
-
   removeEmptyState();
+  renderMessage("user", text);
 
-  renderMessage("user", content);
+  if (!activeId) {
+    const conv = await createConversation().catch(() => null);
+    if (!conv) {
+      showToast("Could not start a session. Please try again.");
+      return;
+    }
+    activeId = conv.id;
+    sessions.unshift({ id: activeId, title: conv.title });
+    saveSessions();
+    loadedSessionId = activeId;
+    renderSessionsBar(sessions, activeId);
+  }
 
+  const skeleton = renderSkeleton();
   setLoading(true);
 
-  setTyping(true);
-
   try {
-    const response = await sendMessage(
-      activeConversation.id,
-      content
-    );
-
-    renderMessage(
-      "assistant",
-      response.reply
-    );
-  } catch (error) {
-    showToast(error.message)
+    const response = await sendMessage(activeId, text);
+    skeleton.remove();
+    renderMessage("assistant", response.reply);
+  } catch (err) {
+    skeleton.remove();
+    showToast(err.message);
   } finally {
-    setTyping(false);
-
     setLoading(false);
-
     focusInput();
   }
 }
