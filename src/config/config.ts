@@ -1,4 +1,4 @@
-process.loadEnvFile();
+try { process.loadEnvFile(); } catch {}
 
 function envOrThrow(key: string): string {
   const value = process.env[key];
