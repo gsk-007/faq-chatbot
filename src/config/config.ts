@@ -29,7 +29,7 @@ type Config = {
 export const config: Config = {
   api: {
     port: Number(envOrThrow("PORT")),
-    platform: envOrThrow("node_env"),
+    platform: process.env.NODE_ENV ?? "development",
   },
 
   db: {
