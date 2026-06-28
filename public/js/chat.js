@@ -34,7 +34,7 @@ export function getActiveId()  { return activeId; }
 export async function initSession() {
   renderSessionsBar(sessions, activeId);
 
-  if (loadedSessionId === activeId) return;
+  if (activeId && loadedSessionId === activeId) return;
 
   if (activeId) {
     clearMessages();
